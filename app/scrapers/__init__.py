@@ -1,28 +1,29 @@
-"""Scraper registry — unified entry point for all scrapers."""
+"""Scraper registry — single entry point to run every scraper."""
 
 import logging
 
 from sqlalchemy.orm import Session
 
-from app.scrapers.blog import scrape_blogs
-from app.scrapers.youtube import scrape_youtube_channels
+from app.scrapers.blog import BlogScraper
+from app.scrapers.youtube import YouTubeScraper
 
 logger = logging.getLogger(__name__)
 
 
 def run_all_scrapers(db: Session) -> int:
-    """Run every scraper and return total count of new articles inserted."""
+    """Run every registered scraper and return the total count of new articles."""
+    youtube = YouTubeScraper()
+    blog = BlogScraper()
+
     total = 0
-
-    logger.info("── Running YouTube scraper ──")
-    yt_count = scrape_youtube_channels(db)
-    logger.info("YouTube: %d new videos", yt_count)
-    total += yt_count
-
-    logger.info("── Running Blog scraper ──")
-    blog_count = scrape_blogs(db)
-    logger.info("Blogs: %d new articles", blog_count)
-    total += blog_count
+    for scraper in (youtube, blog):
+        name = scraper.__class__.__name__
+        try:
+            count = scraper.scrape(db)
+            total += count
+            logger.info("%s: %d new articles", name, count)
+        except Exception:
+            logger.exception("%s failed", name)
 
     logger.info("── Scraping complete: %d new items total ──", total)
     return total

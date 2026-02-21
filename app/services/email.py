@@ -1,0 +1,56 @@
+"""Email service — sends the HTML digest via Gmail SMTP.
+
+Uses TLS (port 587) with a Gmail App Password.
+"""
+
+import logging
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from app.config import settings
+
+logger = logging.getLogger(__name__)
+
+
+class EmailService:
+    """Sends HTML emails via SMTP (configured for Gmail by default)."""
+
+    def send(self, subject: str, html_body: str) -> bool:
+        """Send an HTML email using the credentials in settings.
+
+        Returns True on success, False on failure.
+        """
+        if not settings.email_from or not settings.email_to or not settings.email_password:
+            logger.error("Email credentials not configured in .env — skipping send.")
+            return False
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = settings.email_from
+        msg["To"] = settings.email_to
+
+        # Attach HTML body (with a plain-text fallback)
+        plain_text = f"View this email in an HTML-capable client.\n\n{subject}"
+        msg.attach(MIMEText(plain_text, "plain"))
+        msg.attach(MIMEText(html_body, "html"))
+
+        try:
+            with smtplib.SMTP(settings.email_smtp_host, settings.email_smtp_port) as server:
+                server.starttls()
+                server.login(settings.email_from, settings.email_password)
+                server.sendmail(settings.email_from, settings.email_to, msg.as_string())
+
+            logger.info("Digest email sent to %s", settings.email_to)
+            return True
+
+        except smtplib.SMTPAuthenticationError:
+            logger.error(
+                "SMTP authentication failed. Check EMAIL_FROM and EMAIL_PASSWORD in .env. "
+                "For Gmail, use a 16-char App Password (not your regular password)."
+            )
+            return False
+
+        except Exception as e:
+            logger.exception("Failed to send email: %s", e)
+            return False
