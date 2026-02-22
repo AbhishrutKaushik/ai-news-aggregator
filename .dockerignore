@@ -1,0 +1,14 @@
+.venv
+.env
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+docker/
+*.md
+*.db
+.mypy_cache
+.pytest_cache
+.ruff_cache
+uv.lock

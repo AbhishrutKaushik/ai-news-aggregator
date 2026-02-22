@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ai_news
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ../.env
+    environment:
+      # Override DATABASE_URL to point to the compose db service
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/ai_news
+    # Run the scheduler (daily pipeline) by default.
+    # For a one-shot run, override with: docker compose run app python main.py run
+    command: python main.py schedule
+
+volumes:
+  pgdata:
