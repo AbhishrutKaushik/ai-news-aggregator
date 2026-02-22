@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ai_news
       POSTGRES_USER: postgres
@@ -15,20 +16,34 @@ services:
       timeout: 3s
       retries: 5
 
-  app:
+  web:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     env_file:
       - ../.env
     environment:
-      # Override DATABASE_URL to point to the compose db service
       DATABASE_URL: postgresql://postgres:postgres@db:5432/ai_news
-    # Run the scheduler (daily pipeline) by default.
-    # For a one-shot run, override with: docker compose run app python main.py run
+    ports:
+      - "8000:8000"
+    command: python main.py serve --host 0.0.0.0 --port 8000
+
+  scheduler:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/ai_news
     command: python main.py schedule
 
 volumes:

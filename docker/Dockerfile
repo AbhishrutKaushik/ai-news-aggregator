@@ -1,22 +1,23 @@
 FROM python:3.12-slim
 
-# Prevent Python from writing .pyc files and enable unbuffered output
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install system deps required by psycopg2-binary
+# System deps for psycopg2
 RUN apt-get update && \
     apt-get install -y --no-install-recommends libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies (cached layer)
+# Python deps (cached layer)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
 COPY . .
 
-# Default: run the pipeline once (suitable for cron jobs / Render)
-CMD ["python", "main.py", "run"]
+EXPOSE 8000
+
+# Default: start the web server
+# Override with 'python main.py schedule' or 'python main.py run'
+CMD ["python", "main.py", "serve", "--host", "0.0.0.0", "--port", "8000"]

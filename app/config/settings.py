@@ -47,5 +47,10 @@ class Settings(BaseSettings):
         """Return blog URLs as a list."""
         return [url.strip() for url in self.blog_urls.split(",") if url.strip()]
 
+    @property
+    def email_to_list(self) -> list[str]:
+        """Return recipient email addresses as a list."""
+        return [e.strip() for e in self.email_to.split(",") if e.strip()]
+
 
 settings = Settings()

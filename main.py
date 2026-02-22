@@ -112,5 +112,24 @@ def list_sources():
         click.echo()
 
 
+@cli.command()
+@click.option("--host", default="0.0.0.0", help="Bind host.")
+@click.option("--port", default=8000, type=int, help="Bind port.")
+@click.option("--reload", "do_reload", is_flag=True, help="Enable auto-reload for development.")
+def serve(host: str, port: int, do_reload: bool):
+    """Start the web server (subscription page + API)."""
+    import uvicorn
+
+    click.echo(f"🚀 DeepFeed web server starting at http://{host}:{port}")
+    uvicorn.run(
+        "app.web:create_app",
+        factory=True,
+        host=host,
+        port=port,
+        reload=do_reload,
+        log_level="info",
+    )
+
+
 if __name__ == "__main__":
     cli()

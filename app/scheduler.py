@@ -12,6 +12,7 @@ from apscheduler.triggers.cron import CronTrigger
 from app.config import settings
 from app.email.renderer import DigestRenderer
 from app.models.database import get_db, init_db
+from app.models.models import Subscriber
 from app.scrapers import run_all_scrapers
 from app.services.digest import DigestService
 from app.services.email import EmailService
@@ -47,10 +48,34 @@ def run_pipeline() -> None:
         renderer = DigestRenderer()
         subject, html_body = renderer.render(db)
 
-        # Step 4 — Send email
+        # Step 4 — Send email to .env recipients + DB subscribers
         logger.info("Step 4/4: Sending email…")
         email_svc = EmailService()
-        sent = email_svc.send(subject, html_body)
+
+        # Gather all recipients: .env list + active subscribers from DB
+        env_recipients = settings.email_to_list
+        db_subscribers = (
+            db.query(Subscriber.email)
+            .filter(Subscriber.active == True, Subscriber.confirmed == True)
+            .all()
+        )
+        subscriber_emails = [row[0] for row in db_subscribers]
+
+        # Merge and deduplicate (case-insensitive)
+        seen = set()
+        all_recipients = []
+        for email in env_recipients + subscriber_emails:
+            key = email.strip().lower()
+            if key not in seen:
+                seen.add(key)
+                all_recipients.append(email.strip())
+
+        logger.info(
+            "Recipients: %d from .env, %d subscribers, %d total (deduplicated)",
+            len(env_recipients), len(subscriber_emails), len(all_recipients),
+        )
+
+        sent = email_svc.send(subject, html_body, recipients=all_recipients) if all_recipients else False
 
         elapsed = time.time() - start
         if sent:

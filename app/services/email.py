@@ -16,19 +16,28 @@ logger = logging.getLogger(__name__)
 class EmailService:
     """Sends HTML emails via SMTP (configured for Gmail by default)."""
 
-    def send(self, subject: str, html_body: str) -> bool:
+    def send(self, subject: str, html_body: str, recipients: list[str] | None = None) -> bool:
         """Send an HTML email using the credentials in settings.
+
+        Args:
+            subject: Email subject line.
+            html_body: Rendered HTML content.
+            recipients: Optional explicit list of recipients.
+                        Falls back to settings.email_to_list if not provided.
 
         Returns True on success, False on failure.
         """
-        if not settings.email_from or not settings.email_to or not settings.email_password:
+        if recipients is None:
+            recipients = settings.email_to_list
+
+        if not settings.email_from or not recipients or not settings.email_password:
             logger.error("Email credentials not configured in .env — skipping send.")
             return False
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
         msg["From"] = settings.email_from
-        msg["To"] = settings.email_to
+        msg["To"] = ", ".join(recipients)
 
         # Attach HTML body (with a plain-text fallback)
         plain_text = f"View this email in an HTML-capable client.\n\n{subject}"
@@ -39,9 +48,9 @@ class EmailService:
             with smtplib.SMTP(settings.email_smtp_host, settings.email_smtp_port) as server:
                 server.starttls()
                 server.login(settings.email_from, settings.email_password)
-                server.sendmail(settings.email_from, settings.email_to, msg.as_string())
+                server.sendmail(settings.email_from, recipients, msg.as_string())
 
-            logger.info("Digest email sent to %s", settings.email_to)
+            logger.info("Digest email sent to %s", ", ".join(recipients))
             return True
 
         except smtplib.SMTPAuthenticationError:

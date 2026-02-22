@@ -10,14 +10,17 @@ dependencies = [
     "beautifulsoup4>=4.14.3",
     "certifi>=2026.1.4",
     "click>=8.3.1",
+    "fastapi>=0.129.2",
     "feedparser>=6.0.12",
     "google-genai>=1.64.0",
     "httpx>=0.28.1",
     "jinja2>=3.1.6",
     "psycopg2-binary>=2.9.11",
     "pydantic-settings>=2.13.1",
+    "pydantic[email]>=2.12.5",
     "python-dotenv>=1.2.1",
     "sqlalchemy>=2.0.46",
+    "uvicorn[standard]>=0.41.0",
     "youtube-transcript-api>=1.2.4",
 ]
 

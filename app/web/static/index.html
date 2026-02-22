@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepFeed &mdash; Your Daily AI Digest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --brown: #8A7650;
+            --sage: #8E977D;
+            --cream: #ECE7D1;
+            --tan: #DBCEA5;
+            --bg: #F5F1E8;
+            --text: #3a3328;
+            --text-light: #6b6355;
+            --text-muted: #9a9182;
+            --white: #FDFBF6;
+            --serif: 'Instrument Serif', Georgia, serif;
+            --sans: 'Space Grotesk', system-ui, sans-serif;
+            --glass: rgba(255, 253, 246, 0.45);
+            --glass-border: rgba(138, 118, 80, 0.15);
+            --glass-blur: 20px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            font-weight: 400;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        ::selection { background: var(--tan); color: var(--text); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--cream); }
+        ::-webkit-scrollbar-thumb { background: var(--tan); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--brown); }
+
+        a { color: inherit; text-decoration: none; }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-delay-1 { transition-delay: 0.08s; }
+        .reveal-delay-2 { transition-delay: 0.16s; }
+        .reveal-delay-3 { transition-delay: 0.24s; }
+        .reveal-delay-4 { transition-delay: 0.32s; }
+        .reveal-delay-5 { transition-delay: 0.40s; }
+
+        .glass {
+            background: var(--glass);
+            backdrop-filter: blur(var(--glass-blur)) saturate(1.3);
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+        }
+        .glass-strong {
+            background: rgba(255, 253, 246, 0.6);
+            backdrop-filter: blur(28px) saturate(1.4);
+            -webkit-backdrop-filter: blur(28px) saturate(1.4);
+            border: 1px solid rgba(138, 118, 80, 0.12);
+            border-radius: 20px;
+        }
+
+        .nav {
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+            padding: 1rem 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(245, 241, 232, 0.7);
+            backdrop-filter: blur(16px) saturate(1.2);
+            -webkit-backdrop-filter: blur(16px) saturate(1.2);
+            border-bottom: 1px solid rgba(138, 118, 80, 0.08);
+            transition: padding 0.3s ease;
+        }
+        .nav-brand {
+            font-family: var(--serif);
+            font-size: 1.3rem;
+            color: var(--brown);
+            letter-spacing: 0.02em;
+        }
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-links a {
+            font-size: 0.78rem; font-weight: 500;
+            letter-spacing: 0.06em; text-transform: uppercase;
+            color: var(--text-muted);
+            transition: color 0.25s ease;
+        }
+        .nav-links a:hover { color: var(--brown); }
+        .nav-cta {
+            padding: 0.5rem 1.2rem;
+            background: var(--brown);
+            color: var(--cream);
+            font-size: 0.75rem; font-weight: 500;
+            letter-spacing: 0.06em; text-transform: uppercase;
+            border-radius: 8px;
+            transition: background 0.25s ease, transform 0.2s ease;
+        }
+        .nav-cta:hover { background: #7a6844; transform: translateY(-1px); }
+
+        .hero {
+            min-height: 100svh;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            text-align: center;
+            padding: 7rem 2rem 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -30%; right: -20%;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(142, 151, 125, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -20%; left: -15%;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(219, 206, 165, 0.25) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            font-size: 0.7rem; font-weight: 500;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--sage);
+            margin-bottom: 2rem;
+        }
+        .hero-badge::before {
+            content: '';
+            width: 6px; height: 6px;
+            background: var(--sage);
+            border-radius: 50%;
+            animation: pulse-dot 2.5s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .hero-title {
+            font-family: var(--serif);
+            font-size: clamp(3.2rem, 9vw, 7rem);
+            line-height: 0.95;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            position: relative; z-index: 1;
+        }
+        .hero-title em {
+            font-style: italic;
+            color: var(--brown);
+        }
+        .hero-desc {
+            max-width: 480px;
+            font-size: 1rem;
+            color: var(--text-light);
+            line-height: 1.7;
+            margin-bottom: 2.5rem;
+            position: relative; z-index: 1;
+        }
+        .hero-actions {
+            display: flex; gap: 1rem;
+            position: relative; z-index: 1;
+        }
+        .btn-primary {
+            padding: 0.85rem 2rem;
+            background: var(--brown);
+            color: var(--cream);
+            font-family: var(--sans); font-size: 0.8rem; font-weight: 500;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            border: none; border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.25s, transform 0.2s;
+        }
+        .btn-primary:hover { background: #7a6844; transform: translateY(-1px); }
+        .btn-ghost {
+            padding: 0.85rem 2rem;
+            background: transparent;
+            color: var(--text-light);
+            font-family: var(--sans); font-size: 0.8rem; font-weight: 500;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            border: 1px solid var(--tan);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: border-color 0.25s, color 0.25s;
+        }
+        .btn-ghost:hover { border-color: var(--brown); color: var(--brown); }
+        .hero-scroll {
+            position: absolute; bottom: 2.5rem;
+            display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+            font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .hero-scroll-line {
+            width: 1px; height: 32px;
+            background: linear-gradient(to bottom, var(--tan), transparent);
+            animation: scroll-hint 2s ease-in-out infinite;
+        }
+        @keyframes scroll-hint {
+            0%, 100% { transform: scaleY(1); opacity: 1; }
+            50% { transform: scaleY(0.5); opacity: 0.4; }
+        }
+
+        section { padding: 6rem 2rem; }
+        .container { max-width: 1080px; margin: 0 auto; }
+        .section-label {
+            font-size: 0.65rem; font-weight: 600;
+            letter-spacing: 0.18em; text-transform: uppercase;
+            color: var(--sage);
+            margin-bottom: 1rem;
+        }
+        .section-title {
+            font-family: var(--serif);
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            line-height: 1.1;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+        .section-desc {
+            font-size: 0.95rem; color: var(--text-light);
+            line-height: 1.7; max-width: 520px;
+        }
+
+        .how-it-works { background: var(--white); }
+        .steps-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem; margin-top: 3rem;
+        }
+        .step-card {
+            padding: 2rem 1.5rem;
+            position: relative;
+        }
+        .step-num {
+            font-family: var(--serif);
+            font-size: 2.5rem;
+            color: var(--tan);
+            line-height: 1;
+            margin-bottom: 1rem;
+        }
+        .step-title {
+            font-weight: 600; font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+        .step-desc {
+            font-size: 0.8rem; color: var(--text-light);
+            line-height: 1.6;
+        }
+        .step-card + .step-card::before {
+            content: '';
+            position: absolute; left: -0.75rem; top: 2.5rem;
+            width: 1px; height: 2rem;
+            background: var(--tan);
+            opacity: 0.4;
+        }
+
+        .preview { position: relative; overflow: hidden; }
+        .preview::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--tan), transparent);
+        }
+        .preview-layout {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 3rem; align-items: center; margin-top: 3rem;
+        }
+        .preview-cards { display: flex; flex-direction: column; gap: 1rem; }
+        .digest-card {
+            padding: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+        .digest-card:hover { transform: translateY(-2px); }
+        .digest-card-head {
+            display: flex; align-items: center; gap: 0.6rem;
+            margin-bottom: 0.75rem;
+        }
+        .digest-badge {
+            font-size: 0.6rem; font-weight: 600;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+        }
+        .digest-badge.video { background: rgba(183, 113, 90, 0.12); color: #a0604a; }
+        .digest-badge.blog { background: rgba(142, 151, 125, 0.15); color: #6b7a5e; }
+        .digest-badge.news { background: rgba(138, 118, 80, 0.12); color: var(--brown); }
+        .digest-source {
+            font-size: 0.65rem; color: var(--text-muted);
+            letter-spacing: 0.05em; text-transform: uppercase;
+        }
+        .digest-title {
+            font-family: var(--serif); font-size: 1.15rem;
+            line-height: 1.3; margin-bottom: 0.4rem;
+        }
+        .digest-summary {
+            font-size: 0.8rem; color: var(--text-light);
+            line-height: 1.6;
+        }
+        .preview-info {
+            padding-left: 2rem;
+            border-left: 1px solid var(--tan);
+        }
+        .preview-info .section-desc { margin-bottom: 2rem; }
+        .preview-stat-row {
+            display: flex; gap: 2rem; margin-top: 2rem;
+        }
+        .preview-stat-val {
+            font-family: var(--serif);
+            font-size: 2rem; color: var(--brown);
+            line-height: 1;
+        }
+        .preview-stat-label {
+            font-size: 0.65rem; color: var(--text-muted);
+            letter-spacing: 0.1em; text-transform: uppercase;
+            margin-top: 0.25rem;
+        }
+
+        .topics { background: var(--white); }
+        .topics-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 1rem; margin-top: 3rem;
+        }
+        .topic-chip {
+            padding: 1.5rem;
+            display: flex; align-items: center; gap: 1rem;
+            transition: transform 0.25s ease;
+        }
+        .topic-chip:hover { transform: translateY(-2px); }
+        .topic-icon {
+            width: 42px; height: 42px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+            background: rgba(142, 151, 125, 0.1);
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+        .topic-name {
+            font-weight: 600; font-size: 0.9rem;
+            margin-bottom: 0.15rem;
+        }
+        .topic-desc {
+            font-size: 0.72rem; color: var(--text-muted);
+        }
+
+        .subscribe { position: relative; }
+        .subscribe::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--tan), transparent);
+        }
+        .subscribe-layout {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 4rem; align-items: start; margin-top: 3rem;
+        }
+        .subscribe-left .section-desc { margin-bottom: 2rem; }
+        .subscribe-features {
+            display: flex; flex-direction: column; gap: 1rem;
+        }
+        .subscribe-feature {
+            display: flex; align-items: flex-start; gap: 0.75rem;
+        }
+        .subscribe-feature-icon {
+            width: 28px; height: 28px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(142, 151, 125, 0.1);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+        .subscribe-feature p {
+            font-size: 0.85rem; color: var(--text-light);
+            line-height: 1.5;
+        }
+        .subscribe-feature strong {
+            color: var(--text); font-weight: 600;
+        }
+
+        .form-card { padding: 2.5rem; }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-label {
+            display: block;
+            font-size: 0.7rem; font-weight: 600;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--text-light);
+            margin-bottom: 0.4rem;
+        }
+        .form-input {
+            width: 100%; padding: 0.75rem 1rem;
+            background: rgba(245, 241, 232, 0.6);
+            border: 1px solid rgba(138, 118, 80, 0.15);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--sans); font-size: 0.88rem;
+            outline: none;
+            transition: border-color 0.25s, background 0.25s;
+        }
+        .form-input:focus {
+            border-color: var(--brown);
+            background: rgba(255, 253, 246, 0.8);
+        }
+        .form-input::placeholder { color: var(--text-muted); }
+
+        .interest-grid {
+            display: flex; flex-wrap: wrap; gap: 0.4rem;
+        }
+        .interest-chip {
+            padding: 0.4rem 0.85rem;
+            border: 1px solid rgba(138, 118, 80, 0.18);
+            border-radius: 20px;
+            font-size: 0.73rem; font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            background: transparent;
+            font-family: var(--sans);
+        }
+        .interest-chip:hover {
+            border-color: var(--sage);
+            color: var(--text-light);
+        }
+        .interest-chip.active {
+            background: rgba(142, 151, 125, 0.15);
+            border-color: var(--sage);
+            color: #5a6b4e;
+        }
+        .form-submit {
+            width: 100%; padding: 0.85rem;
+            margin-top: 0.5rem;
+            background: var(--brown);
+            color: var(--cream);
+            font-family: var(--sans); font-size: 0.8rem; font-weight: 500;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            border: none; border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.25s, transform 0.2s;
+        }
+        .form-submit:hover { background: #7a6844; transform: translateY(-1px); }
+        .form-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .form-divider {
+            display: flex; align-items: center; gap: 0.8rem;
+            margin: 1.5rem 0;
+        }
+        .form-divider::before, .form-divider::after {
+            content: ''; flex: 1; height: 1px;
+            background: rgba(138, 118, 80, 0.12);
+        }
+        .form-divider span {
+            font-size: 0.6rem; font-weight: 500;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .share-row { display: flex; gap: 0.5rem; }
+        .share-input {
+            flex: 1; padding: 0.65rem 0.9rem;
+            background: rgba(245, 241, 232, 0.6);
+            border: 1px solid rgba(138, 118, 80, 0.15);
+            border-radius: 8px; color: var(--text);
+            font-family: var(--sans); font-size: 0.82rem;
+            outline: none; transition: border-color 0.25s;
+        }
+        .share-input:focus { border-color: var(--brown); }
+        .share-input::placeholder { color: var(--text-muted); }
+        .share-btn {
+            padding: 0.65rem 1rem;
+            border: 1px solid rgba(138, 118, 80, 0.25);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--brown);
+            font-family: var(--sans); font-size: 0.7rem; font-weight: 500;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            white-space: nowrap;
+        }
+        .share-btn:hover {
+            background: rgba(138, 118, 80, 0.06);
+            border-color: var(--brown);
+        }
+
+        .toast {
+            position: fixed; bottom: 2rem; left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            padding: 0.85rem 1.8rem;
+            border-radius: 10px;
+            font-size: 0.82rem; font-weight: 500;
+            z-index: 10000;
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s;
+            opacity: 0; pointer-events: none;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast.success {
+            background: rgba(142, 151, 125, 0.15);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(142, 151, 125, 0.25);
+            color: #5a6b4e;
+        }
+        .toast.error {
+            background: rgba(183, 113, 90, 0.12);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(183, 113, 90, 0.25);
+            color: #a0604a;
+        }
+
+        .footer {
+            padding: 4rem 2rem 2rem;
+            border-top: 1px solid rgba(138, 118, 80, 0.1);
+        }
+        .footer-grid {
+            max-width: 1080px; margin: 0 auto;
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem; margin-bottom: 3rem;
+        }
+        .footer-brand {
+            font-family: var(--serif);
+            font-size: 1.3rem; color: var(--brown);
+            margin-bottom: 0.5rem;
+        }
+        .footer-desc {
+            font-size: 0.78rem; color: var(--text-muted);
+            line-height: 1.7; max-width: 260px;
+        }
+        .footer-heading {
+            font-size: 0.6rem; font-weight: 600;
+            letter-spacing: 0.15em; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: 1rem;
+        }
+        .footer-links {
+            display: flex; flex-direction: column; gap: 0.5rem;
+        }
+        .footer-links a, .footer-links span {
+            font-size: 0.78rem; color: var(--text-light);
+            transition: color 0.2s;
+        }
+        .footer-links a:hover { color: var(--brown); }
+        .footer-bottom {
+            max-width: 1080px; margin: 0 auto;
+            display: flex; justify-content: space-between;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(138, 118, 80, 0.08);
+        }
+        .footer-copy {
+            font-size: 0.65rem; color: var(--text-muted);
+            letter-spacing: 0.08em; text-transform: uppercase;
+        }
+        .footer-tagline {
+            font-family: var(--serif); font-style: italic;
+            color: var(--text-muted); font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .steps-grid { grid-template-columns: repeat(2, 1fr); }
+            .step-card + .step-card::before { display: none; }
+            .preview-layout { grid-template-columns: 1fr; }
+            .preview-info { padding-left: 0; border-left: none; border-top: 1px solid var(--tan); padding-top: 2rem; }
+            .topics-grid { grid-template-columns: 1fr 1fr; }
+            .subscribe-layout { grid-template-columns: 1fr; gap: 2rem; }
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
+            .hero-actions { flex-direction: column; align-items: center; }
+        }
+        @media (max-width: 480px) {
+            .steps-grid { grid-template-columns: 1fr; }
+            .topics-grid { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<nav class="nav">
+    <div class="nav-brand">DeepFeed</div>
+    <ul class="nav-links">
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#preview">Digest</a></li>
+        <li><a href="#topics">Topics</a></li>
+    </ul>
+    <a href="#subscribe" class="nav-cta">Subscribe</a>
+</nav>
+
+<section class="hero">
+    <div class="hero-badge reveal">Curated daily &mdash; powered by AI</div>
+    <h1 class="hero-title reveal reveal-delay-1">
+        Stay ahead<br>of <em>what matters</em>
+    </h1>
+    <p class="hero-desc reveal reveal-delay-2">
+        AI breakthroughs from the best YouTube channels and research blogs &mdash; distilled into a short digest and delivered to your inbox every morning.
+    </p>
+    <div class="hero-actions reveal reveal-delay-3">
+        <a href="#subscribe" class="btn-primary">Get your digest</a>
+        <a href="#how" class="btn-ghost">See how it works</a>
+    </div>
+    <div class="hero-scroll">
+        <span>Scroll</span>
+        <div class="hero-scroll-line"></div>
+    </div>
+</section>
+
+<section class="how-it-works" id="how">
+    <div class="container">
+        <div class="section-label reveal">How it works</div>
+        <h2 class="section-title reveal reveal-delay-1">Four steps, zero effort</h2>
+        <p class="section-desc reveal reveal-delay-2">We handle everything in the background so you wake up to clarity, not chaos.</p>
+        <div class="steps-grid">
+            <div class="step-card glass reveal reveal-delay-1">
+                <div class="step-num">01</div>
+                <div class="step-title">Scrape</div>
+                <div class="step-desc">We pull new content from YouTube AI channels and research blogs every 24 hours via RSS feeds and transcripts.</div>
+            </div>
+            <div class="step-card glass reveal reveal-delay-2">
+                <div class="step-num">02</div>
+                <div class="step-title">Summarize</div>
+                <div class="step-desc">Google Gemini reads each article and video transcript, extracting the key insights into a concise summary.</div>
+            </div>
+            <div class="step-card glass reveal reveal-delay-3">
+                <div class="step-num">03</div>
+                <div class="step-title">Personalize</div>
+                <div class="step-desc">Your digest is tailored to the topics you care about &mdash; LLMs, robotics, safety, agents, and more.</div>
+            </div>
+            <div class="step-card glass reveal reveal-delay-4">
+                <div class="step-num">04</div>
+                <div class="step-title">Deliver</div>
+                <div class="step-desc">A beautifully formatted email lands in your inbox every morning at 8 AM. No app needed.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="preview" id="preview">
+    <div class="container">
+        <div class="preview-layout">
+            <div class="preview-cards">
+                <div class="digest-card glass reveal">
+                    <div class="digest-card-head">
+                        <span class="digest-badge video">Video</span>
+                        <span class="digest-source">Google DeepMind</span>
+                    </div>
+                    <div class="digest-title">Gemini 2.0 &mdash; Multimodal Reasoning at Scale</div>
+                    <div class="digest-summary">Next-gen Gemini brings native tool use, improved code generation, and a 2M token context window to production.</div>
+                </div>
+                <div class="digest-card glass reveal reveal-delay-1">
+                    <div class="digest-card-head">
+                        <span class="digest-badge blog">Blog</span>
+                        <span class="digest-source">Anthropic Research</span>
+                    </div>
+                    <div class="digest-title">Constitutional AI &mdash; New Approaches to Alignment</div>
+                    <div class="digest-summary">Training AI systems that are helpful, harmless, and honest using scalable oversight and interpretability.</div>
+                </div>
+                <div class="digest-card glass reveal reveal-delay-2">
+                    <div class="digest-card-head">
+                        <span class="digest-badge news">News</span>
+                        <span class="digest-source">MIT Tech Review</span>
+                    </div>
+                    <div class="digest-title">Open-Source Models Close the Gap on GPT-4</div>
+                    <div class="digest-summary">Llama 3, Mistral Large, and Qwen 2.5 approach frontier performance across key reasoning benchmarks.</div>
+                </div>
+            </div>
+            <div class="preview-info">
+                <div class="section-label reveal">Daily digest</div>
+                <h2 class="section-title reveal reveal-delay-1">Everything important,<br>nothing else</h2>
+                <p class="section-desc reveal reveal-delay-2">Each morning you get a clean email with summaries, key takeaways, and links to dive deeper &mdash; all from sources you trust.</p>
+                <div class="preview-stat-row reveal reveal-delay-3">
+                    <div>
+                        <div class="preview-stat-val">50+</div>
+                        <div class="preview-stat-label">Sources</div>
+                    </div>
+                    <div>
+                        <div class="preview-stat-val">8 AM</div>
+                        <div class="preview-stat-label">Daily</div>
+                    </div>
+                    <div>
+                        <div class="preview-stat-val">3 min</div>
+                        <div class="preview-stat-label">Read time</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="topics" id="topics">
+    <div class="container">
+        <div class="section-label reveal">Topics</div>
+        <h2 class="section-title reveal reveal-delay-1">Pick what you care about</h2>
+        <p class="section-desc reveal reveal-delay-2">Choose your interests when you subscribe, and we will prioritize the content that matters to you.</p>
+        <div class="topics-grid">
+            <div class="topic-chip glass reveal reveal-delay-1">
+                <div class="topic-icon">&#129504;</div>
+                <div><div class="topic-name">Large Language Models</div><div class="topic-desc">GPT, Gemini, Claude and open-source</div></div>
+            </div>
+            <div class="topic-chip glass reveal reveal-delay-2">
+                <div class="topic-icon">&#128065;</div>
+                <div><div class="topic-name">Computer Vision</div><div class="topic-desc">Image gen, multimodal, video AI</div></div>
+            </div>
+            <div class="topic-chip glass reveal reveal-delay-3">
+                <div class="topic-icon">&#129302;</div>
+                <div><div class="topic-name">Robotics</div><div class="topic-desc">Embodied AI and autonomous systems</div></div>
+            </div>
+            <div class="topic-chip glass reveal reveal-delay-1">
+                <div class="topic-icon">&#128737;</div>
+                <div><div class="topic-name">AI Safety</div><div class="topic-desc">Alignment, governance, red-teaming</div></div>
+            </div>
+            <div class="topic-chip glass reveal reveal-delay-2">
+                <div class="topic-icon">&#128300;</div>
+                <div><div class="topic-name">Research</div><div class="topic-desc">DeepMind, OpenAI, academia</div></div>
+            </div>
+            <div class="topic-chip glass reveal reveal-delay-3">
+                <div class="topic-icon">&#9889;</div>
+                <div><div class="topic-name">AI Agents</div><div class="topic-desc">Tool use, agentic workflows, MCP</div></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="subscribe" id="subscribe">
+    <div class="container">
+        <div class="subscribe-layout">
+            <div class="subscribe-left">
+                <div class="section-label reveal">Subscribe</div>
+                <h2 class="section-title reveal reveal-delay-1">Join DeepFeed</h2>
+                <p class="section-desc reveal reveal-delay-2">Free forever. Unsubscribe anytime. Your first digest arrives the next morning.</p>
+                <div class="subscribe-features reveal reveal-delay-3">
+                    <div class="subscribe-feature">
+                        <div class="subscribe-feature-icon">&#128236;</div>
+                        <p><strong>Daily delivery</strong> &mdash; Lands in your inbox at 8 AM UTC every day.</p>
+                    </div>
+                    <div class="subscribe-feature">
+                        <div class="subscribe-feature-icon">&#127919;</div>
+                        <p><strong>Personalized</strong> &mdash; Pick the AI topics you actually care about.</p>
+                    </div>
+                    <div class="subscribe-feature">
+                        <div class="subscribe-feature-icon">&#129302;</div>
+                        <p><strong>AI-summarized</strong> &mdash; Gemini reads everything so you don't have to.</p>
+                    </div>
+                    <div class="subscribe-feature">
+                        <div class="subscribe-feature-icon">&#128279;</div>
+                        <p><strong>Shareable</strong> &mdash; Invite friends and they will get their own digest.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card glass-strong reveal reveal-delay-2">
+                <form id="subscribe-form" onsubmit="return false;">
+                    <div class="form-group">
+                        <label class="form-label" for="sub-name">Name</label>
+                        <input class="form-input" type="text" id="sub-name" placeholder="Ada Lovelace" autocomplete="name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="sub-email">Email</label>
+                        <input class="form-input" type="email" id="sub-email" placeholder="ada@example.com" required autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Interests</label>
+                        <div class="interest-grid">
+                            <button type="button" class="interest-chip active" data-interest="LLMs">LLMs</button>
+                            <button type="button" class="interest-chip active" data-interest="Computer Vision">Vision</button>
+                            <button type="button" class="interest-chip" data-interest="Robotics">Robotics</button>
+                            <button type="button" class="interest-chip" data-interest="AI Safety">Safety</button>
+                            <button type="button" class="interest-chip active" data-interest="AI Research">Research</button>
+                            <button type="button" class="interest-chip" data-interest="AI Agents">Agents</button>
+                            <button type="button" class="interest-chip" data-interest="Generative AI">Gen AI</button>
+                            <button type="button" class="interest-chip" data-interest="NLP">NLP</button>
+                            <button type="button" class="interest-chip" data-interest="MLOps">MLOps</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="form-submit" id="submit-btn">Subscribe &mdash; it's free</button>
+                </form>
+
+                <div class="form-divider"><span>Share with a friend</span></div>
+                <div class="share-row">
+                    <input class="share-input" type="email" id="share-email" placeholder="friend@example.com">
+                    <button class="share-btn" id="share-btn">Invite</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="footer">
+    <div class="footer-grid">
+        <div>
+            <div class="footer-brand">DeepFeed</div>
+            <p class="footer-desc">AI news from top YouTube channels and research blogs &mdash; summarized and delivered daily. Built with care.</p>
+        </div>
+        <div>
+            <div class="footer-heading">Explore</div>
+            <div class="footer-links">
+                <a href="#how">How it works</a>
+                <a href="#preview">Sample digest</a>
+                <a href="#topics">Topics</a>
+                <a href="#subscribe">Subscribe</a>
+            </div>
+        </div>
+        <div>
+            <div class="footer-heading">Sources</div>
+            <div class="footer-links">
+                <span>YouTube AI</span>
+                <span>Research blogs</span>
+                <span>Tech news</span>
+                <span>arXiv papers</span>
+            </div>
+        </div>
+        <div>
+            <div class="footer-heading">Connect</div>
+            <div class="footer-links">
+                <a href="https://github.com/AbhishrutKaushik/ai-news-aggregator" target="_blank">GitHub</a>
+                <a href="#subscribe">Subscribe</a>
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <div class="footer-copy">&copy; 2025 DeepFeed</div>
+        <div class="footer-tagline">The signal, not the noise.</div>
+    </div>
+</footer>
+
+<script>
+(function() {
+    "use strict";
+
+    var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+            if (e.isIntersecting) {
+                e.target.classList.add('visible');
+                observer.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
+
+    function showToast(msg, type) {
+        type = type || 'success';
+        var toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.className = 'toast ' + type + ' show';
+        setTimeout(function() { toast.classList.remove('show'); }, 3500);
+    }
+
+    document.querySelectorAll('.interest-chip').forEach(function(chip) {
+        chip.addEventListener('click', function() { chip.classList.toggle('active'); });
+    });
+
+    document.getElementById('subscribe-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var btn = document.getElementById('submit-btn');
+        var email = document.getElementById('sub-email').value.trim();
+        var name = document.getElementById('sub-name').value.trim();
+        var interests = Array.from(document.querySelectorAll('.interest-chip.active'))
+            .map(function(c) { return c.dataset.interest; });
+
+        if (!email) { showToast('Please enter your email', 'error'); return; }
+        if (!interests.length) { showToast('Pick at least one interest', 'error'); return; }
+
+        btn.disabled = true;
+        btn.textContent = 'Subscribing...';
+
+        fetch('/api/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, name: name || null, interests: interests })
+        })
+        .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+        .then(function(result) {
+            if (result.ok) {
+                showToast(result.data.message || 'Welcome to DeepFeed!', 'success');
+                document.getElementById('sub-email').value = '';
+                document.getElementById('sub-name').value = '';
+            } else {
+                showToast(result.data.detail || 'Something went wrong', 'error');
+            }
+        })
+        .catch(function() { showToast('Network error - try again', 'error'); })
+        .finally(function() {
+            btn.disabled = false;
+            btn.textContent = "Subscribe \u2014 it\u2019s free";
+        });
+    });
+
+    document.getElementById('share-btn').addEventListener('click', function() {
+        var shareEmail = document.getElementById('share-email').value.trim();
+        if (!shareEmail) { showToast("Enter your friend's email", 'error'); return; }
+
+        var btn = document.getElementById('share-btn');
+        btn.disabled = true; btn.textContent = 'Sending...';
+
+        fetch('/api/invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: shareEmail })
+        })
+        .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+        .then(function(result) {
+            if (result.ok) {
+                showToast(result.data.message || 'Invite sent!', 'success');
+                document.getElementById('share-email').value = '';
+            } else {
+                showToast(result.data.detail || 'Could not send invite', 'error');
+            }
+        })
+        .catch(function() { showToast('Network error - try again', 'error'); })
+        .finally(function() { btn.disabled = false; btn.textContent = 'Invite'; });
+    });
+})();
+</script>
+
+</body>
+</html>

@@ -100,3 +100,26 @@ class Article(Base):
 
     def __repr__(self) -> str:
         return f"<Article {self.title[:60]!r}>"
+
+
+# ── Subscriber ───────────────────────────────────────────────────────────────
+
+
+class Subscriber(Base):
+    """A user who subscribed to receive the AI news digest via email."""
+
+    __tablename__ = "subscribers"
+    __table_args__ = (UniqueConstraint("email", name="uq_subscribers_email"),)
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_new_uuid)
+    email = Column(String(320), nullable=False)
+    name = Column(String(255), nullable=True)
+    interests = Column(Text, nullable=False, default="AI, machine learning, large language models")
+    active = Column(Boolean, default=True, nullable=False)
+    confirmed = Column(Boolean, default=True, nullable=False)  # can add double opt-in later
+    unsubscribe_token = Column(String(64), nullable=False, default=lambda: uuid.uuid4().hex)
+    referred_by = Column(UUID(as_uuid=True), nullable=True)  # subscriber who shared the link
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<Subscriber {self.email!r}>"
