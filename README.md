@@ -2,12 +2,69 @@
 
 AI news from top YouTube channels and research blogs — summarized by Gemini and delivered to your inbox every morning.
 
-## What it does
+## Architecture
 
-1. **Scrape** — Pulls new content from YouTube AI channels and research blogs every 24 hours via RSS feeds
-2. **Summarize** — Google Gemini reads each article/transcript and extracts key insights
-3. **Render** — Builds a clean HTML email digest using Jinja2 templates
-4. **Deliver** — Sends the digest to all subscribers via Gmail SMTP at 8 AM UTC daily
+```
+                         ┌──────────────────────────────────────────────┐
+                         │              DeepFeed System                 │
+                         └──────────────────────────────────────────────┘
+
+ ┌────────────┐    RSS    ┌───────────────────────────────────────────────────────────┐
+ │  YouTube   │ ────────▶ │                                                           │
+ │  Channels  │           │   ┌─────────┐    ┌───────────┐    ┌────────┐   ┌───────┐ │
+ └────────────┘           │   │         │    │           │    │        │   │       │ │
+                          │   │ Scrape  │──▶ │ Summarize │──▶ │ Render │──▶│ Email │ │
+ ┌────────────┐    RSS    │   │         │    │           │    │        │   │       │ │
+ │  Research  │ ────────▶ │   │ youtube │    │  Gemini   │    │ Jinja2 │   │ Gmail │ │
+ │  Blogs     │           │   │ blog    │    │  2.0      │    │  HTML  │   │ SMTP  │ │
+ └────────────┘           │   └─────────┘    └───────────┘    └────────┘   └───┬───┘ │
+                          │        │              │                            │     │
+                          │        ▼              ▼                            │     │
+                          │   ┌──────────────────────────┐                     │     │
+                          │   │     PostgreSQL            │                     │     │
+                          │   │  ┌────────┐ ┌─────────┐  │                     │     │
+                          │   │  │Articles│ │Subscribers│ │                     │     │
+                          │   │  └────────┘ └─────────┘  │                     │     │
+                          │   └──────────────────────────┘                     │     │
+                          │                                                    │     │
+                          │   ┌──────────────────────┐        ┌────────────┐   │     │
+                          │   │  FastAPI Web Server   │        │ APScheduler│   │     │
+                          │   │  :8000                │        │ 8 AM UTC   │───┘     │
+                          │   │  ┌────────────────┐   │        └────────────┘         │
+                          │   │  │ Landing Page   │   │                               │
+                          │   │  │ /api/subscribe │   │                               │
+                          │   │  │ /api/invite    │   │                               │
+                          │   │  └────────────────┘   │                               │
+                          │   └──────────────────────┘                               │
+                          └───────────────────────────────────────────────────────────┘
+                                                                       │
+                                                                       ▼
+                                                              ┌────────────────┐
+                                                              │  Subscribers'  │
+                                                              │    Inboxes     │
+                                                              └────────────────┘
+```
+
+### Pipeline flow
+
+1. **Scrape** — `app/scrapers/` pulls new content from YouTube channels (RSS + transcripts) and research blogs (RSS + BeautifulSoup) every 24 hours. New articles are stored in PostgreSQL.
+
+2. **Summarize** — `app/services/llm.py` sends each unsummarized article to Google Gemini 2.0 Flash, which returns a concise summary with key takeaways. Handles rate limits gracefully — unsummarized articles stay in the DB and get picked up on the next run.
+
+3. **Render** — `app/email/renderer.py` uses a Jinja2 HTML template to build a clean, styled email digest from the day's summarized articles.
+
+4. **Deliver** — `app/services/email.py` queries all active subscribers from the database, merges with any `.env` recipients, deduplicates, and sends the digest via Gmail SMTP.
+
+### Web layer
+
+The FastAPI server at port 8000 serves the subscription landing page and exposes:
+- `POST /api/subscribe` — creates a new subscriber (or reactivates an existing one)
+- `POST /api/invite` — creates an inactive subscriber record for a friend
+- `GET /api/subscribers/count` — returns the current subscriber count
+
+### Scheduling
+
+APScheduler runs the full pipeline (scrape → summarize → render → email) once daily at 8 AM UTC. The web server and scheduler run as separate processes (separate Docker containers in production).
 
 ## Stack
 
