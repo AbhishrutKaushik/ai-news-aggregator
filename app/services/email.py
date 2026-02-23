@@ -16,7 +16,14 @@ logger = logging.getLogger(__name__)
 class EmailService:
     """Sends HTML emails via SMTP (configured for Gmail by default)."""
 
-    def send(self, subject: str, html_body: str, recipients: list[str] | None = None) -> bool:
+    def send(
+        self,
+        subject: str,
+        html_body: str,
+        recipients: list[str] | None = None,
+        *,
+        show_in_header: bool = False,
+    ) -> bool:
         """Send an HTML email using the credentials in settings.
 
         Args:
@@ -24,6 +31,10 @@ class EmailService:
             html_body: Rendered HTML content.
             recipients: Optional explicit list of recipients.
                         Falls back to settings.email_to_list if not provided.
+            show_in_header: If True, recipients will appear in the "To" header.
+                            By default the recipients are treated as BCC (they
+                            are still passed to SMTP but not shown in the
+                            message headers).
 
         Returns True on success, False on failure.
         """
@@ -37,7 +48,17 @@ class EmailService:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
         msg["From"] = settings.email_from
-        msg["To"] = ", ".join(recipients)
+
+        # The recipients list is always passed to ``sendmail`` but by default we
+        # don't put them in the `To` header so that they behave like BCC.  If the
+        # caller explicitly passes ``show_in_header=True`` we populate the header
+        # for debugging.
+        if show_in_header:
+            msg["To"] = ", ".join(recipients)
+        else:
+            # use a generic placeholder (self-address) so some clients don't drop
+            # the message entirely
+            msg["To"] = settings.email_from
 
         # Attach HTML body (with a plain-text fallback)
         plain_text = f"View this email in an HTML-capable client.\n\n{subject}"

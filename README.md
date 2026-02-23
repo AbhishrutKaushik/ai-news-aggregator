@@ -9,8 +9,8 @@ AI news from top YouTube channels and research blogs — summarized by Gemini an
 ## Features
 
 - **Multi-source aggregation** — Scrapes YouTube channels and AI research blogs via RSS
-- **AI-powered summaries** — Google Gemini 2.0 Flash generates concise summaries with key takeaways
-- **Beautiful email digests** — Clean, responsive HTML emails delivered via Gmail SMTP
+- **AI-powered summaries** — Google Gemini 2.0 Flash generates concise summaries with key takeaways (watch out for free-tier quotas; see troubleshooting below)
+- **Beautiful email digests** — Clean, responsive HTML emails delivered via Gmail SMTP. Recipients are added as BCC by default so they don't see each other's addresses.
 - **Subscriber management** — Web UI for subscriptions + invite friends feature
 - **Automated scheduling** — GitHub Actions runs daily at 8 AM IST (no server required!)
 - **Docker support** — One-command deployment with docker-compose
@@ -50,6 +50,19 @@ AI news from top YouTube channels and research blogs — summarized by Gemini an
 | Karpathy Blog | Andrej Karpathy |
 
 ## Architecture
+
+### Troubleshooting
+
+- **Summarization failures**: if Gemini returns `RESOURCE_EXHAUSTED` or 429 errors,
+  the most common cause is hitting the free‑tier quota (you'll see logs like
+  "Quota exceeded for metric: ... limit: 0").
+  - Solution: upgrade your Google Cloud account / enable billing, or switch to a
+    paid Gemini plan. Alternatively, reduce the number of articles or switch to
+    a smaller model in `app/services/llm.py`.
+  - The pipeline will keep unsummarized articles in the DB and automatically
+    try again on the next run.
+
+
 
 ```
                          ┌──────────────────────────────────────────────┐
