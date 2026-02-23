@@ -1,6 +1,53 @@
 # DeepFeed
 
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Daily Digest](https://github.com/AbhishrutKaushik/ai-news-aggregator/actions/workflows/daily-digest.yml/badge.svg)](https://github.com/AbhishrutKaushik/ai-news-aggregator/actions/workflows/daily-digest.yml)
+
 AI news from top YouTube channels and research blogs — summarized by Gemini and delivered to your inbox every morning.
+
+## Features
+
+- **Multi-source aggregation** — Scrapes YouTube channels and AI research blogs via RSS
+- **AI-powered summaries** — Google Gemini 2.0 Flash generates concise summaries with key takeaways
+- **Beautiful email digests** — Clean, responsive HTML emails delivered via Gmail SMTP
+- **Subscriber management** — Web UI for subscriptions + invite friends feature
+- **Automated scheduling** — GitHub Actions runs daily at 8 AM IST (no server required!)
+- **Docker support** — One-command deployment with docker-compose
+
+## Pre-configured Sources
+
+### YouTube Channels (12)
+| Channel | Focus |
+|---------|-------|
+| Two Minute Papers | AI research papers explained |
+| Google DeepMind | DeepMind research updates |
+| Yannic Kilcher | ML paper reviews |
+| AI Explained | AI news and analysis |
+| Fireship | Tech news, quick explainers |
+| Sentdex | Python & ML tutorials |
+| ML Street Talk | AI researcher interviews |
+| Weights & Biases | MLOps and experiments |
+| AI Jason | AI tools and tutorials |
+| The AI Epiphany | Deep learning explanations |
+| StatQuest | Statistics and ML fundamentals |
+| Computerphile | Computer science concepts |
+
+### AI Blogs (12)
+| Blog | Publisher |
+|------|-----------|
+| OpenAI Blog | OpenAI |
+| Hugging Face Blog | Hugging Face |
+| Google AI Blog | Google |
+| Anthropic | Anthropic |
+| DeepMind Blog | Google DeepMind |
+| Meta AI | Meta |
+| MIT AI News | MIT |
+| The Gradient | Independent |
+| MarkTechPost | Independent |
+| Machine Learning Mastery | Jason Brownlee |
+| Lilian Weng Blog | OpenAI researcher |
+| Karpathy Blog | Andrej Karpathy |
 
 ## Architecture
 
@@ -64,7 +111,26 @@ The FastAPI server at port 8000 serves the subscription landing page and exposes
 
 ### Scheduling
 
-APScheduler runs the full pipeline (scrape → summarize → render → email) once daily at 8 AM UTC. The web server and scheduler run as separate processes (separate Docker containers in production).
+**Option 1: GitHub Actions (Recommended — No server required!)**
+
+The repository includes a GitHub Actions workflow that runs daily at 8 AM IST. Just push to GitHub and add your secrets:
+
+1. Go to **Settings → Secrets and variables → Actions**
+2. Add these repository secrets:
+   - `GEMINI_API_KEY` — Your Google Gemini API key
+   - `EMAIL_FROM` — Your Gmail address
+   - `EMAIL_TO` — Recipient email(s), comma-separated
+   - `EMAIL_PASSWORD` — Gmail App Password (16 characters)
+
+The workflow will automatically scrape, summarize, and email — no laptop or server needed!
+
+**Option 2: Local APScheduler**
+
+APScheduler runs the full pipeline (scrape → summarize → render → email) once daily at 8 AM IST. Requires keeping `python main.py schedule` running.
+
+**Option 3: Docker**
+
+Run the scheduler container which handles everything automatically.
 
 ## Stack
 
@@ -81,21 +147,37 @@ APScheduler runs the full pipeline (scrape → summarize → render → email) o
 
 ## Quick start
 
+### Prerequisites
+- Python 3.12+
+- PostgreSQL 16+ (or Docker)
+- [Google Gemini API Key](https://aistudio.google.com/apikey) (free tier available)
+- [Gmail App Password](https://myaccount.google.com/apppasswords) (requires 2FA enabled)
+
+### Local Setup
+
 ```bash
 # Clone
 git clone https://github.com/AbhishrutKaushik/ai-news-aggregator.git
 cd ai-news-aggregator
 
-# Setup
-cp .env.example .env          # fill in your keys
-uv sync                       # install deps
-python main.py init-db         # create tables
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Add sources
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure
+cp .env.example .env       # Then fill in your API keys and credentials
+
+# Initialize database
+python main.py init-db
+
+# Add sources (or use defaults in .env)
 python main.py add-source --type youtube --name "Two Minute Papers" --url "https://youtube.com/channel/UCbfYPyITQ-7l4upoX8nvctg"
 python main.py add-source --type blog --name "OpenAI Blog" --url "https://openai.com/blog" --feed-url "https://openai.com/blog/rss.xml"
 
-# Run once
+# Run once (test)
 python main.py run
 
 # Or start the daily scheduler

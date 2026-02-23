@@ -1,0 +1,88 @@
+name: Daily AI Digest
+
+on:
+  schedule:
+    # Runs at 8:00 AM IST (2:30 AM UTC) every day
+    - cron: '30 2 * * *'
+  workflow_dispatch:  # Allows manual trigger from GitHub UI
+
+jobs:
+  send-digest:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ai_news
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Initialize database
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ai_news
+        run: python main.py init-db
+
+      - name: Add sources to database
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ai_news
+        run: |
+          # Add YouTube channels
+          python main.py add-source --type youtube --name "Two Minute Papers" --url "https://youtube.com/channel/UCYO_jab_esuFRV4b17AJtAw" || true
+          python main.py add-source --type youtube --name "Google DeepMind" --url "https://youtube.com/channel/UCP7jMXSY2xbc3KCAE0MHQ-A" || true
+          python main.py add-source --type youtube --name "Yannic Kilcher" --url "https://youtube.com/channel/UCZHmQk67mN31dHXTsp3jCmA" || true
+          python main.py add-source --type youtube --name "AI Explained" --url "https://youtube.com/channel/UCNJ1Ymd5yFuUPtn21xtRbbw" || true
+          python main.py add-source --type youtube --name "Fireship" --url "https://youtube.com/channel/UCsBjURrPoezykLs9EqgamOA" || true
+          python main.py add-source --type youtube --name "Sentdex" --url "https://youtube.com/channel/UCfzlCWGWYyIQ0aLC5w48gBQ" || true
+          python main.py add-source --type youtube --name "ML Street Talk" --url "https://youtube.com/channel/UCMLtBahI5DMrt0NPvDSoIRQ" || true
+          python main.py add-source --type youtube --name "Weights & Biases" --url "https://youtube.com/channel/UC8hHEwU0RRrflISB9MLWV1A" || true
+          python main.py add-source --type youtube --name "AI Jason" --url "https://youtube.com/channel/UCcefcZRL2oI4nqVNPrz1xyw" || true
+          python main.py add-source --type youtube --name "The AI Epiphany" --url "https://youtube.com/channel/UCj8shE7aIn4Yawwbo2FcmUA" || true
+          
+          # Add Blog sources
+          python main.py add-source --type blog --name "OpenAI Blog" --url "https://openai.com/blog" --feed-url "https://openai.com/blog/rss.xml" || true
+          python main.py add-source --type blog --name "Hugging Face Blog" --url "https://huggingface.co/blog" --feed-url "https://huggingface.co/blog/feed.xml" || true
+          python main.py add-source --type blog --name "Google AI Blog" --url "https://blog.google/technology/ai/" --feed-url "https://blog.google/technology/ai/rss/" || true
+          python main.py add-source --type blog --name "Anthropic" --url "https://www.anthropic.com" --feed-url "https://www.anthropic.com/rss.xml" || true
+          python main.py add-source --type blog --name "DeepMind Blog" --url "https://deepmind.google/blog/" --feed-url "https://deepmind.google/blog/rss.xml" || true
+          python main.py add-source --type blog --name "Meta AI" --url "https://ai.meta.com/blog/" --feed-url "https://ai.meta.com/blog/rss/" || true
+          python main.py add-source --type blog --name "MIT AI News" --url "https://news.mit.edu/topic/artificial-intelligence2" --feed-url "https://news.mit.edu/topic/artificial-intelligence2/feed" || true
+          python main.py add-source --type blog --name "The Gradient" --url "https://thegradient.pub" --feed-url "https://thegradient.pub/rss/" || true
+          python main.py add-source --type blog --name "MarkTechPost" --url "https://www.marktechpost.com" --feed-url "https://www.marktechpost.com/feed/" || true
+          python main.py add-source --type blog --name "Lilian Weng Blog" --url "https://lilianweng.github.io" --feed-url "https://lilianweng.github.io/index.xml" || true
+
+      - name: Run digest pipeline
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ai_news
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: gemini-2.0-flash
+          EMAIL_SMTP_HOST: smtp.gmail.com
+          EMAIL_SMTP_PORT: 587
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          USER_INTERESTS: "Large language models, AI agents, retrieval-augmented generation, open-source AI, AI safety"
+          FETCH_WINDOW_HOURS: 24
+        run: python main.py run

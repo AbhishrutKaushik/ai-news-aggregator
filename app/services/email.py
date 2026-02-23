@@ -45,13 +45,21 @@ class EmailService:
         msg.attach(MIMEText(html_body, "html"))
 
         try:
-            with smtplib.SMTP(settings.email_smtp_host, settings.email_smtp_port) as server:
+            with smtplib.SMTP(settings.email_smtp_host, settings.email_smtp_port, timeout=30) as server:
                 server.starttls()
                 server.login(settings.email_from, settings.email_password)
                 server.sendmail(settings.email_from, recipients, msg.as_string())
 
             logger.info("Digest email sent to %s", ", ".join(recipients))
             return True
+
+        except TimeoutError:
+            logger.error(
+                "SMTP connection timed out. Port %d may be blocked by your network. "
+                "Try a different network or use an HTTP-based email service.",
+                settings.email_smtp_port,
+            )
+            return False
 
         except smtplib.SMTPAuthenticationError:
             logger.error(

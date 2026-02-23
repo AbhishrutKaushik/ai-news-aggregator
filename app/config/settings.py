@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     # ── Personalization / Schedule ───────────────────────
     user_interests: str = "AI, machine learning, large language models"
-    digest_schedule_hour: int = 8   # hour of day (UTC)
+    digest_schedule_hour: int = 8   # hour of day (IST)
     fetch_window_hours: int = 24
 
     # ── Helpers ──────────────────────────────────────────

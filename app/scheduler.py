@@ -85,16 +85,16 @@ def run_pipeline() -> None:
 
 
 def start_scheduler() -> None:
-    """Start APScheduler to run the pipeline daily at DIGEST_SCHEDULE_HOUR (UTC)."""
+    """Start APScheduler to run the pipeline daily at DIGEST_SCHEDULE_HOUR (IST)."""
     init_db()
 
     scheduler = BlockingScheduler()
-    trigger = CronTrigger(hour=settings.digest_schedule_hour, minute=0, timezone="UTC")
+    trigger = CronTrigger(hour=settings.digest_schedule_hour, minute=0, timezone="Asia/Kolkata")
 
     scheduler.add_job(run_pipeline, trigger, id="daily_digest", name="Daily AI Digest")
 
     logger.info(
-        "Scheduler started — pipeline will run daily at %02d:00 UTC.",
+        "Scheduler started — pipeline will run daily at %02d:00 IST.",
         settings.digest_schedule_hour,
     )
     logger.info("Press Ctrl+C to stop.")
